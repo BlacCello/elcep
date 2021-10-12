@@ -23,7 +23,7 @@ func main() {
 }
 
 func initExecutor(configuration *config.Configuration) *plugin.Executor {
-	pluginProvider := plugin.NewPluginProvider(configuration.Options.PluginDir)
+	pluginProvider := plugin.NewPluginProvider(configuration.Options.PluginDir, configuration)
 
 	client, err := elastic.NewClient(elastic.SetHealthcheckTimeoutStartup(30*time.Second), elastic.SetURL(configuration.Options.ElasticsearchURL.String()))
 	if err != nil {
@@ -34,6 +34,7 @@ func initExecutor(configuration *config.Configuration) *plugin.Executor {
 	}
 
 	for name, newMon := range pluginProvider.Plugins {
+		//TODO this is just wrong, its not even used in counter and bucket
 		conf := configuration.ForPlugin(name)
 		if conf == nil {
 			log.Fatalf("Missing config for plugin %s\n", name)

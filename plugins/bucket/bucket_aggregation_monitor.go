@@ -27,6 +27,7 @@ func NewAggregationMonitor(query *bucketAggregationQuery) *bucketAggregationMoni
 	}
 }
 
+
 func (monitor *bucketAggregationMonitor) Perform(client *elastic.Client) {
 	response, err := monitor.query.build(client).Do(context.Background())
 	if err != nil {

@@ -1,4 +1,4 @@
-FROM library/golang:1.12.6-alpine3.9 AS build-env
+FROM library/golang:1.17.2-alpine3.14 AS build-env
 
 LABEL version=1.2
 
@@ -38,7 +38,7 @@ RUN for dir in */; do                                           \
         cd ..;                                                  \
     done
 
-FROM alpine
+FROM alpine:3.14
 
 WORKDIR /app
 COPY --from=build-env /app/elcep /app/

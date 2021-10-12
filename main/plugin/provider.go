@@ -19,11 +19,38 @@ type Provider struct {
 }
 
 // NewPluginProvider returns an instance with loaded Plugins from plugin Files
-func NewPluginProvider(pluginFolder string) *Provider {
+func NewPluginProvider(pluginFolder string, configuration *config.Configuration) *Provider {
 	provider := &Provider{}
 	files := findPlugins(pluginFolder)
-	provider.initializePlugins(files)
+	log.Printf("found plugins in folder: %v", files)
+	activefiles := getActivatedPlugins(files, configuration)
+	log.Printf("activated plugins: %v", activefiles)
+
+	provider.initializePlugins(activefiles)
 	return provider
+}
+
+//TODO write a test for this
+func getActivatedPlugins(files []string, configuration *config.Configuration) []string {
+	var activatedPlugins []string
+	for _, file := range files {
+		log.Printf("check if there is a pluginconfig for file %s ", file)
+		// TODO its frustrating that we can only differ via thus methods.
+		pluginConfig := configuration.ForPlugin(getLogicalPluginName(file))
+		if nil != pluginConfig {
+			log.Printf("there is a pluginconfig: %v ", pluginConfig)
+			// TODO this just does not seem right... can we not just introduce a valid model? this drives me crazy and to disable plugin mechanism as a whole
+			options := pluginConfig.Options.(map[interface{}]interface{})
+			log.Printf("and we have even options: %v ", configuration)
+			enabled := options["enabled"]
+			if enabled.(bool) {
+				activatedPlugins = append(activatedPlugins, file)
+			}
+		} else {
+			log.Printf("sadly the pluginconfiguration is nil: %v ", pluginConfig)
+		}
+	}
+	return activatedPlugins
 }
 
 // GetPluginNames returns a list of logical plugin names
@@ -77,5 +104,6 @@ func (provider *Provider) initializePlugins(fileNames []string) {
 
 func getLogicalPluginName(file string) string {
 	name := filepath.Base(file)
+	// i.e. counter.so -> counter
 	return name[0 : len(name)-3]
 }
