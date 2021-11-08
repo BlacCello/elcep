@@ -15,8 +15,8 @@ metrics:
 
       # TODO look at the escapes
       kubernetes_testapp1: "kubernetes.app\\/name\\: testapp1"
-      # TODO this does NOT work!!! because of https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters
-      kubernetes_testapp2: "kubernetes.app/name: testapp2"
+      # TODO look at the escapes
+      kubernetes_testapp2: "kubernetes.app\\/name: testapp2"
       # TODO this does NOT work!!! because of https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters
       kubernetes_testapp3: "log:exception AND kubernetes.app/name: testapp3"
 
