@@ -25,7 +25,11 @@ func main() {
 func initExecutor(configuration *config.Configuration) *plugin.Executor {
 	pluginProvider := plugin.NewPluginProvider(configuration.Options.PluginDir, configuration)
 
-	client, err := elastic.NewClient(elastic.SetHealthcheckTimeoutStartup(30*time.Second), elastic.SetURL(configuration.Options.ElasticsearchURL.String()))
+	// TODO should be configurable - false for opensearch right now
+	client, err := elastic.NewClient(elastic.SetHealthcheckTimeoutStartup(30*time.Second),
+		elastic.SetURL(configuration.Options.ElasticsearchURL.String()),
+		elastic.SetHealthcheck(false),
+		elastic.SetSniff(false))
 	if err != nil {
 		log.Fatal(err)
 	}
