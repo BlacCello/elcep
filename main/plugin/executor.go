@@ -26,6 +26,7 @@ func (executor *Executor) BuildPlugins(configuration config.Configuration, plugi
 	log.Println("Plugin loaded: ", reflect.TypeOf(plugin))
 }
 
+// TODO think about separation of frequency? is this a good idea?
 // RunPlugins runs all Plugins in a loop
 func (executor *Executor) RunPlugins(freq time.Duration) {
 	nextExecution := time.Now()

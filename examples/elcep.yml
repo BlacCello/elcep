@@ -1,33 +1,49 @@
 plugins:
+# TODO make this all better
   counter:
     enabled: true
-  bucket: true
+  bucket:
+    enabled: false
+# TODO have examples of configoptions. this is not sufficient right now
+# TODO should the order of the config not be: metrics -> plugin -> query ? think about this
 
 metrics:
   exceptions:
     counter:
       all: "log:exception"
       npe: "log:NullPointerException"
-      allbckt: "log:exception AND bucket:true"
-    bucket:
-      by_type:
-        query: "log:exception AND bucket:true"
-        aggregations:
-          - "key1"
-          - "key2"
 
-  socket:
-    counter:
-      all: "log:socket"
-    
-  images:
-    counter:
-      all: "log:image"
-      uploaded: "Receiving new image"
-  
-  mongodb:
-    counter:
-      all_connection: "log:connection accepted from AND container_name:application_mongodb_1"
+      # TODO look at the escapes
+      kubernetes_testapp1: "kubernetes.app\\/name\\: testapp1"
+      # TODO look at the escapes
+      kubernetes_testapp2: "kubernetes.app\\/name: testapp2"
+      # TODO this does NOT work!!! because of https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters
+      kubernetes_testapp3: "log:exception AND kubernetes.app/name: testapp3"
+
+# TODO right now i think bucket aggregation is kind of broken. good thing is we can just deactivate this
+#    bucket:
+#      by_type:
+#        query: "log:exception AND bucket:true"
+#        aggregations:
+#          - "key1"
+#          - "key2"
+#          - "kubernetes.app/name"
+
+# TODO im not sure what this is for exactly. does not make sense imho
+#  socket:
+#    counter:
+#      all: "log:socket"
+
+# TODO im not sure what this is for exactly. does not make sense imho
+#  images:
+#    counter:
+#      all: "log:image"
+#      uploaded: "Receiving new image"
+
+# TODO im not sure what this is for exactly. does not make sense imho
+#  mongodb:
+#    counter:
+#      all_connection: "log:connection accepted from AND container_name:application_mongodb_1"
 
 
   

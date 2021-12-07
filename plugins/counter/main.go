@@ -46,6 +46,7 @@ func (cp *CounterPlugin) Perform(elasticClient *elastic.Client) {
 	}
 }
 
+// TODO is the second parameter not the pluginOption? this should matter!!! i.e. the timekey coulkd be interesting for differenz plugins. as an index could be
 // NewPlugin must be exported. The name should be exactly "NewMonitor" and returns an instance of the custommonitor
 // noinspection GoUnusedExportedFunction
 func NewPlugin(options config.Options, _ interface{}) plugin.Plugin {
@@ -63,19 +64,26 @@ func (logMon *LogCounterMonitor) BuildMetrics(query config.Query) []prometheus.C
 		Name: "elcep_logs_matched_" + query.Name() + "_total",
 		Help: "Counts number of matched logs for " + query.Name(),
 	})
-	logMon.metrics.rpcDurationHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "elcep_logs_matched_rpc_durations_" + query.Name() + "_histogram_seconds",
-		Help:    "Logs matched RPC latency distributions for " + query.Name(),
-		Buckets: prometheus.DefBuckets,
-	})
 
-	return []prometheus.Collector{logMon.metrics.matchCounter, logMon.metrics.rpcDurationHistogram}
+	//TODO make histogram debug mode only?
+	//logMon.metrics.rpcDurationHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+	//	Name:    "elcep_logs_matched_rpc_durations_" + query.Name() + "_histogram_seconds",
+	//	Help:    "Logs matched RPC latency distributions for " + query.Name(),
+	//	Buckets: prometheus.DefBuckets,
+	//})
+
+	//TODO makae hostgram debug mode only?
+	//return []prometheus.Collector{logMon.metrics.matchCounter, logMon.metrics.rpcDurationHistogram}
+
+	return []prometheus.Collector{logMon.metrics.matchCounter}
 }
 
 // Perform must exist and implement some custom action which runs frequently
 func (logMon *LogCounterMonitor) Perform(elasticClient *elastic.Client, timeKey string) {
-	increment, duration := logMon.runQuery(elasticClient, timeKey)
-	logMon.metrics.rpcDurationHistogram.Observe(duration)
+	increment, _ := logMon.runQuery(elasticClient, timeKey)
+
+	//TODO make histogram debug mode only?
+	//logMon.metrics.rpcDurationHistogram.Observe(duration)
 	logMon.metrics.matchCounter.Add(float64(increment))
 }
 

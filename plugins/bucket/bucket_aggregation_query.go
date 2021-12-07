@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/MaibornWolff/elcep/main/config"
 	"github.com/olivere/elastic"
+	"github.com/patrickmn/go-cache"
 	"log"
+	"regexp"
 	"time"
 )
 
@@ -17,11 +19,11 @@ type bucketAggregationQuery struct {
 }
 
 func Create(query config.Query, timeKey string) *bucketAggregationQuery {
-	aggregationConfig, ok := query["aggregations"];
+	aggregationConfig, ok := query["aggregations"]
 	if !ok {
 		log.Fatalf("Malformed query %v, missing 'aggregations'\n", query)
 	}
-	aggregationSlice, ok := aggregationConfig.([] interface{})
+	aggregationSlice, ok := aggregationConfig.([]interface{})
 	if !ok {
 		log.Fatalf("Malformed query %v, 'aggregations' should be of type %T\n", query, aggregationSlice)
 	}
@@ -31,7 +33,8 @@ func Create(query config.Query, timeKey string) *bucketAggregationQuery {
 		if !ok2 {
 			log.Fatalf("Malformed query %v, %s should be a string", query, _field)
 		}
-		aggregations[index] = field
+
+		aggregations[index] = getAllowedPrometheusLabel(field)
 	}
 
 	return &bucketAggregationQuery{
@@ -43,16 +46,23 @@ func Create(query config.Query, timeKey string) *bucketAggregationQuery {
 }
 
 func (query *bucketAggregationQuery) build(elasticClient *elastic.Client) *elastic.SearchService {
-	service := elasticClient.Search().Query(elastic.NewBoolQuery().
-		Must(elastic.
-			NewQueryStringQuery(query.query)).
+	searchSource := elastic.NewSearchSource().Query(elastic.NewBoolQuery().Must(elastic.
+		NewQueryStringQuery(query.query)).
 		Filter(elastic.
 			NewRangeQuery(query.timeKey).
 			Gte(startupTime.Format("2006-01-02 15:04:05")).
-			Format("yyyy-MM-dd HH:mm:ss"))).
+			Format("yyyy-MM-dd HH:mm:ss")))
+
+	service := elasticClient.Search().Source(searchSource).
 		FilterPath("hits.total,aggregations")
+
 	if len(query.aggregations) > 0 {
-		service = service.Aggregation(createAggregations(query.aggregations))
+		originAggregations := getOriginalAggregationKeys(query.aggregations)
+		service = service.Aggregation(createAggregations(originAggregations))
+		// TODO log this at debug-level
+		//	source, _ := searchSource.Aggregation(createAggregations(originAggregations)).Source()
+		//	marshalledSource, _ := json.Marshal(source)
+		//	log.Printf("%v", string(marshalledSource))
 	}
 	return service
 }
@@ -68,4 +78,27 @@ func createAggregations(aggregationKeys []string) (string, elastic.Aggregation) 
 		return aggregationKeys[0], elastic.NewTermsAggregation().Field(aggregationKeys[0]).
 			SubAggregation(createAggregations(aggregationKeys[1:]))
 	}
+}
+
+// Retrieve the origin label name from the cache
+func getOriginalAggregationKeys(s []string) []string {
+	strSlice := make([]string, 0)
+	for _, str := range s {
+		if x, found := bucketCache.Get(str); found {
+			value := x.(string)
+			strSlice = append(strSlice, value)
+		}
+	}
+	return strSlice
+}
+
+// Replace given string special characters and return '_' instead.
+// save the origin label to cache.
+// https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+func getAllowedPrometheusLabel(s string) string {
+	var re = regexp.MustCompile(`[!@#$%^&*(),./\\?":{}|<>]`)
+	r := re.ReplaceAllString(s, `${1}_${2}`)
+	bucketCache.Set(r, s, cache.NoExpiration) // set origin label to the cache
+
+	return r
 }

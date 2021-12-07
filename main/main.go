@@ -23,9 +23,13 @@ func main() {
 }
 
 func initExecutor(configuration *config.Configuration) *plugin.Executor {
-	pluginProvider := plugin.NewPluginProvider(configuration.Options.PluginDir)
+	pluginProvider := plugin.NewPluginProvider(configuration.Options.PluginDir, configuration)
 
-	client, err := elastic.NewClient(elastic.SetHealthcheckTimeoutStartup(30*time.Second), elastic.SetURL(configuration.Options.ElasticsearchURL.String()))
+	// TODO should be configurable - false for opensearch right now
+	client, err := elastic.NewClient(elastic.SetHealthcheckTimeoutStartup(30*time.Second),
+		elastic.SetURL(configuration.Options.ElasticsearchURL.String()),
+		elastic.SetHealthcheck(false),
+		elastic.SetSniff(false))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,6 +38,7 @@ func initExecutor(configuration *config.Configuration) *plugin.Executor {
 	}
 
 	for name, newMon := range pluginProvider.Plugins {
+		//TODO this is just wrong, its not even used in counter and bucket
 		conf := configuration.ForPlugin(name)
 		if conf == nil {
 			log.Fatalf("Missing config for plugin %s\n", name)

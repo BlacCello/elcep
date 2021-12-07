@@ -16,9 +16,10 @@ generate_log() {
     echo "{\
         \"@timestamp\": \"$1\",\
         \"log\": \"Exception this is a sample log message\",\
-        \"bucket\": true,\
+        \"bucket\": false,\
         \"key1\": $(get_random 3 1),\
         \"key2\": $(get_random 3 1),\
+        \"kubernetes.app/name\": \"testapp$(get_random 3 1)\",\
         \"somefield\": \"somevalue\"\
     }"
 }
