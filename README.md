@@ -54,7 +54,6 @@ To configure the metrics, use the config file (`config.yml`). It has the followi
 ```yaml
 plugins:
   # You can give configuration for the plugins here, if necessary.
-  # Note that this section is required for each plugin you want to use, even if the plugin does not need configuration.
   counter:
     someOption: "foo"
   bucket: true
